@@ -23,6 +23,7 @@
     <ProjectGuid>{AEF949A1-B769-4FF5-BAA6-A1E1A8CDF06D}</ProjectGuid>
     <RootNamespace>OpenGLFirst</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <ProjectName>TSBK03 Project</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -70,8 +71,9 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Users\Emma Broman\Documents\OpenGL Stuff\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Emma Broman\Documents\OpenGL Stuff\Libraries;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)\GL\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)\GL\Libraries;$(LibraryPath)</LibraryPath>
+    <IntDir>$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>C:\Users\Emma Broman\Documents\OpenGL Stuff\Include;$(IncludePath)</IncludePath>
@@ -83,6 +85,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -130,6 +133,10 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\Downloads\glad\src\glad.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Shader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Shader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
