@@ -1,8 +1,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "Shader.h"
 
 #include <iostream>
 
+void init();
+void display(GLFWwindow* window);
+void createWindow(const unsigned int height, const unsigned int width, const char* name);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
@@ -10,6 +14,12 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
+//----------------------Globals-------------------------------------------------
+GLFWwindow* window = nullptr;
+Shader shaderProgram;
+unsigned int VBO, VAO;
+
+//----------------------Main----------------------------------------------------
 int main()
 {
 	// glfw: initialize and configure
@@ -25,15 +35,7 @@ int main()
 
 	// glfw window creation
 	// --------------------
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
-	if (window == NULL)
-	{
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	createWindow(SCR_WIDTH, SCR_HEIGHT, "OpenGL Window");
 
 	// glad: load all OpenGL function pointers
 	// ---------------------------------------
@@ -43,29 +45,133 @@ int main()
 		return -1;
 	}
 
+	// Initialization 
+	// --------------
+
+	float vertices[] = {
+	-0.5f, -0.5f, 0.0f,
+	 0.5f, -0.5f, 0.0f,
+	 0.0f,  0.5f, 0.0f,
+	};
+
+	// Generate Vertex Array Object and buffer
+	glGenBuffers(1, &VBO);
+	glGenVertexArrays(1, &VAO);
+
+	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+	glBindVertexArray(VAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);  // Copy vertex data to buffer
+
+	// set vertex attributes pointers
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// Unbind, to be nice 
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// Unbind VAO so other VAO calls won't accidentally modify this VAO (rarely happens)
+	glBindVertexArray(0);
+
+	init();
+
+	// Wireframe mode: uncomment to apply.
+	// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	// Show some useful information on the GL context
+	std::cout << "GL vendor:       " << glGetString(GL_VENDOR) << std::endl;
+	std::cout << "GL renderer:     " << glGetString(GL_RENDERER) << std::endl;
+	std::cout << "GL version:      " << glGetString(GL_VERSION) << std::endl;
+
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
-		// input
-		// -----
-		processInput(window);
-
-		// render
-		// ------
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-
-		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-		// -------------------------------------------------------------------------------
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+		display(window);
 	}
+
+	// optional: de-allocate all resources once they've outlived their purpose:
+	// ------------------------------------------------------------------------
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
 
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	// ------------------------------------------------------------------
 	glfwTerminate();
 	return 0;
+}
+
+// Initializion of shaders, etc
+//--------------------------------------------------------------------------
+void init()
+{
+	// GL inits
+	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	//glEnable(GL_DEPTH_TEST); // OBS! Depth test requires depth buffer...
+	glDisable(GL_CULL_FACE);
+
+	// Load and compile shaders
+	// ------------------------
+	shaderProgram.create("shaders/shader.vert", "shaders/shader.frag");
+
+}
+
+// Display function - draws and renders!
+//------------------------------------------------------------------------
+void display(GLFWwindow* window)
+{
+	// input
+	// -----
+	processInput(window);
+
+	// render
+	// ------
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	// Activate shader program
+	shaderProgram.use();
+
+	// draw triangle
+	glBindVertexArray(VAO); // only have one VAO => no need to bind every time, but do it to keep things a bit more organized
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+	// -------------------------------------------------------------------------------
+	glfwSwapBuffers(window);
+	glfwPollEvents();
+}
+
+
+void createVBO(int location, int dimensions, const float *data) {
+
+	GLuint bufferID;
+
+	// Generate buffer, activate it and copy the data
+	glGenBuffers(1, &bufferID);
+	glBindBuffer(GL_ARRAY_BUFFER, bufferID);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
+	// Tell OpenGL how the data is stored in our buffer
+	// Attribute location (must match layout(location=#) statement in shader)
+	// Number of dimensions (3 -> vec3 in the shader, 2-> vec2 in the shader),
+	// type GL_FLOAT, not normalized, stride 0, start at element 0
+	glVertexAttribPointer(location, dimensions, GL_FLOAT, GL_FALSE, 0, NULL);
+	// Enable the attribute in the currently bound VAO
+	glEnableVertexAttribArray(location);
+}
+
+// glfw window creation
+// --------------------
+void createWindow(const unsigned int height, const unsigned int width, const char* name)
+{
+	window = glfwCreateWindow(height, width, name, NULL, NULL);
+	if (window == NULL)
+	{
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		exit(EXIT_FAILURE);
+	}
+	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
