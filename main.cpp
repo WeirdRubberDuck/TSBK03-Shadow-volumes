@@ -1,11 +1,13 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "Shader.h"
 
 // glm: linear algebra math, vectors and matrices in a glsl fashion
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include "Shader.h"
+#include "TriangleSoup.hpp"
 
 #include <iostream>
 
@@ -23,6 +25,8 @@ const unsigned int SCR_HEIGHT = 600;
 GLFWwindow* window = nullptr;
 Shader shaderProgram;
 unsigned int VBO, VAO, EBO;
+
+TriangleSoup object;
 
 //----------------------Main----------------------------------------------------
 int main()
@@ -52,48 +56,6 @@ int main()
 
 	// Initialization 
 	// --------------
-
-	float vertices[] = {
-		// positions          // texture coords
-	 	 0.5f,  0.5f, 0.0f,   1.0f, 1.0f,   // top right
-		 0.5f, -0.5f, 0.0f,   1.0f, 0.0f,   // bottom right
-		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f,   // bottom left
-		-0.5f,  0.5f, 0.0f,   0.0f, 1.0f    // top left 
-	};
-	unsigned int indices[] = {
-		0, 1, 3, // first triangle
-		1, 2, 3  // second triangle
-	};
-
-	// Generate Vertex Array Object and buffers
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);  // Copy vertex data to buffer
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	// position attribute
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
-	// texture coord attribute
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-
-	// Unbind, to be nice 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	// remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	// Unbind VAO so other VAO calls won't accidentally modify this VAO (rarely happens)
-	glBindVertexArray(0);
-
 	init();
 
 	// Wireframe mode: uncomment to apply.
@@ -132,6 +94,10 @@ void init()
 	//glEnable(GL_DEPTH_TEST); // OBS! Depth test requires depth buffer...
 	glDisable(GL_CULL_FACE);
 
+	// Create geometry for rendering
+	// -----------------------------
+	object.createBox(0.5, 0.5, 0.0);
+
 	// Load and compile shaders
 	// ------------------------
 	shaderProgram.create("shaders/shader.vert", "shaders/shader.frag");
@@ -161,33 +127,13 @@ void display(GLFWwindow* window)
 	// Upload matrices to shader
 	shaderProgram.setMat4("transform", trans);
 
-	// draw triangle
-	glBindVertexArray(VAO); // only have one VAO => no need to bind every time, but do it to keep things a bit more organized
-	//glDrawArrays(GL_TRIANGLES, 0, 6);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	// Draw objects
+	object.render();
 
 	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 	// -------------------------------------------------------------------------------
 	glfwSwapBuffers(window);
 	glfwPollEvents();
-}
-
-
-void createVBO(int location, int dimensions, const float *data) {
-
-	GLuint bufferID;
-
-	// Generate buffer, activate it and copy the data
-	glGenBuffers(1, &bufferID);
-	glBindBuffer(GL_ARRAY_BUFFER, bufferID);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
-	// Tell OpenGL how the data is stored in our buffer
-	// Attribute location (must match layout(location=#) statement in shader)
-	// Number of dimensions (3 -> vec3 in the shader, 2-> vec2 in the shader),
-	// type GL_FLOAT, not normalized, stride 0, start at element 0
-	glVertexAttribPointer(location, dimensions, GL_FLOAT, GL_FALSE, 0, NULL);
-	// Enable the attribute in the currently bound VAO
-	glEnableVertexAttribArray(location);
 }
 
 // glfw window creation
