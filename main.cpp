@@ -8,6 +8,7 @@
 
 #include "Shader.h"
 #include "TriangleSoup.hpp"
+#include "Camera.h"
 
 #include <iostream>
 
@@ -15,16 +16,28 @@ void init();
 void display(GLFWwindow* window);
 void createWindow(const unsigned int height, const unsigned int width, const char* name);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 
+//----------------------Globals-------------------------------------------------
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-//----------------------Globals-------------------------------------------------
+// camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+// Mouse position and click information
+double lastX = SCR_WIDTH / 2.0f;
+double lastY = SCR_HEIGHT / 2.0f;
+int lastLeft = GL_FALSE; // Keeps track if mouse button was clicked last frame or not
+
+// timing
+float deltaTime = 0.0f;	
+float lastFrame = 0.0f;
+
 GLFWwindow* window = nullptr;
 Shader shaderProgram;
-unsigned int VBO, VAO, EBO;
 
 TriangleSoup object;
 
@@ -70,14 +83,13 @@ int main()
 	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
+		// update time
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
 		display(window);
 	}
-
-	// optional: de-allocate all resources once they've outlived their purpose:
-	// ------------------------------------------------------------------------
-	glDeleteVertexArrays(1, &VAO);
-	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
 
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	// ------------------------------------------------------------------
@@ -89,6 +101,9 @@ int main()
 //--------------------------------------------------------------------------
 void init()
 {
+	// Get initialized mouse info
+	glfwGetCursorPos(window, &lastX, &lastY);
+
 	// GL inits
 	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 	glEnable(GL_DEPTH_TEST); // OBS! Depth test requires depth buffer...
@@ -116,26 +131,22 @@ void display(GLFWwindow* window)
 	// ------
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// create transformations
-
-	glm::mat4 view;
-	glm::mat4 projection;
-
-	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-	projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-
-	// object transformations
-	glm::mat4 model;
-
-	model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
-
 	// activate shader program
 	shaderProgram.use();
 
-	// upload matrices to shader
-	shaderProgram.setMat4("model", model);
-	shaderProgram.setMat4("view", view);
+	// projection transformation
+	glm::mat4 projection;
+	projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 	shaderProgram.setMat4("projection", projection);
+
+	// camera/view transformation
+	glm::mat4 view = camera.GetViewMatrix();
+	shaderProgram.setMat4("view", view);
+
+	// object transformations
+	glm::mat4 model;
+	model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+	shaderProgram.setMat4("model", model);
 
 	// draw objects
 	object.render();
@@ -159,6 +170,8 @@ void createWindow(const unsigned int height, const unsigned int width, const cha
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
@@ -167,6 +180,15 @@ void processInput(GLFWwindow *window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		camera.ProcessKeyboard(FORWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		camera.ProcessKeyboard(LEFT, deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -178,3 +200,29 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
+// glfw: whenever the mouse moves, this callback is called
+// -------------------------------------------------------
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	// Check if left mouse button is pressed
+	int currentLeft = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+
+	// Rotate camera based on mouse input
+	if (currentLeft && lastLeft) { // If a left button drag is in progress
+		double moveX = xpos - lastX;
+		double moveY = lastY - ypos;	// Inverted
+		camera.ProcessMouseMovement(moveX, moveY);
+	}
+
+	// Update cursor information
+	lastLeft = currentLeft;
+	lastX = xpos;
+	lastY = ypos;
+}
+
+// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	camera.ProcessMouseScroll(yoffset);
+}
