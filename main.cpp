@@ -2,6 +2,11 @@
 #include <GLFW/glfw3.h>
 #include "Shader.h"
 
+// glm: linear algebra math, vectors and matrices in a glsl fashion
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <iostream>
 
 void init();
@@ -17,7 +22,7 @@ const unsigned int SCR_HEIGHT = 600;
 //----------------------Globals-------------------------------------------------
 GLFWwindow* window = nullptr;
 Shader shaderProgram;
-unsigned int VBO, VAO;
+unsigned int VBO, VAO, EBO;
 
 //----------------------Main----------------------------------------------------
 int main()
@@ -49,14 +54,21 @@ int main()
 	// --------------
 
 	float vertices[] = {
-	-0.5f, -0.5f, 0.0f,
-	 0.5f, -0.5f, 0.0f,
-	 0.0f,  0.5f, 0.0f,
+		// positions          // texture coords
+	 	 0.5f,  0.5f, 0.0f,   1.0f, 1.0f,   // top right
+		 0.5f, -0.5f, 0.0f,   1.0f, 0.0f,   // bottom right
+		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f,   // bottom left
+		-0.5f,  0.5f, 0.0f,   0.0f, 1.0f    // top left 
+	};
+	unsigned int indices[] = {
+		0, 1, 3, // first triangle
+		1, 2, 3  // second triangle
 	};
 
-	// Generate Vertex Array Object and buffer
-	glGenBuffers(1, &VBO);
+	// Generate Vertex Array Object and buffers
 	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
 
 	// bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
 	glBindVertexArray(VAO);
@@ -64,12 +76,21 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);  // Copy vertex data to buffer
 
-	// set vertex attributes pointers
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	// texture coord attribute
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	// Unbind, to be nice 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	// remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	// Unbind VAO so other VAO calls won't accidentally modify this VAO (rarely happens)
 	glBindVertexArray(0);
 
@@ -94,6 +115,7 @@ int main()
 	// ------------------------------------------------------------------------
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 
 	// glfw: terminate, clearing all previously allocated GLFW resources.
 	// ------------------------------------------------------------------
@@ -128,12 +150,21 @@ void display(GLFWwindow* window)
 	// ------
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// transformations
+	glm::mat4 trans;
+	//trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+	trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+
 	// Activate shader program
 	shaderProgram.use();
 
+	// Upload matrices to shader
+	shaderProgram.setMat4("transform", trans);
+
 	// draw triangle
 	glBindVertexArray(VAO); // only have one VAO => no need to bind every time, but do it to keep things a bit more organized
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 	// -------------------------------------------------------------------------------

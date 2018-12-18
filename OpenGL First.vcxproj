@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)\GL\Include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)\GL\Libraries;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)\Libraries;$(LibraryPath)</LibraryPath>
     <IntDir>$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -137,6 +137,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\shader.frag" />
+    <None Include="shaders\shader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
