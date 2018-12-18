@@ -116,18 +116,28 @@ void display(GLFWwindow* window)
 	// ------
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	// transformations
-	glm::mat4 trans;
-	//trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
-	trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+	// create transformations
 
-	// Activate shader program
+	glm::mat4 view;
+	glm::mat4 projection;
+
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+	projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+
+	// object transformations
+	glm::mat4 model;
+
+	model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	// activate shader program
 	shaderProgram.use();
 
-	// Upload matrices to shader
-	shaderProgram.setMat4("transform", trans);
+	// upload matrices to shader
+	shaderProgram.setMat4("model", model);
+	shaderProgram.setMat4("view", view);
+	shaderProgram.setMat4("projection", projection);
 
-	// Draw objects
+	// draw objects
 	object.render();
 
 	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
