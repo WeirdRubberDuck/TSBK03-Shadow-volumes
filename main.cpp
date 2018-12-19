@@ -25,8 +25,11 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-// camera
+GLFWwindow* window = nullptr;
+
+// camera 
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
 // Mouse position and click information
 double lastX = SCR_WIDTH / 2.0f;
 double lastY = SCR_HEIGHT / 2.0f;
@@ -36,10 +39,18 @@ int lastLeft = GL_FALSE; // Keeps track if mouse button was clicked last frame o
 float deltaTime = 0.0f;	
 float lastFrame = 0.0f;
 
-GLFWwindow* window = nullptr;
-Shader shaderProgram;
+// shaders
+Shader objShader, lampShader;
 
-TriangleSoup object;
+// objects
+TriangleSoup object, lamp;
+
+// lighting
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+
+// colors
+glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+glm::vec3 objectColor(1.0f, 0.5f, 0.2f);
 
 //----------------------Main----------------------------------------------------
 int main()
@@ -111,11 +122,13 @@ void init()
 
 	// Create geometry for rendering
 	// -----------------------------
-	object.createBox(0.5, 0.5, 0.0);
+	object.createBox(0.5, 0.5, 0.2);
+	lamp.createSphere(0.1, 10);
 
 	// Load and compile shaders
 	// ------------------------
-	shaderProgram.create("shaders/shader.vert", "shaders/shader.frag");
+	objShader.create("shaders/diffuseShader.vert", "shaders/diffuseShader.frag");
+	lampShader.create("shaders/lamp.vert", "shaders/lamp.frag");
 
 }
 
@@ -132,24 +145,39 @@ void display(GLFWwindow* window)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// activate shader program
-	shaderProgram.use();
+	objShader.use();
+	objShader.setVec3("objectColor", objectColor);
+	objShader.setVec3("lightColor", lightColor);
+	objShader.setVec3("lightPos", lightPos);
 
-	// projection transformation
+	// perspective projection transformation
 	glm::mat4 projection;
 	projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-	shaderProgram.setMat4("projection", projection);
+	objShader.setMat4("projection", projection);
 
 	// camera/view transformation
 	glm::mat4 view = camera.GetViewMatrix();
-	shaderProgram.setMat4("view", view);
+	objShader.setMat4("view", view);
 
 	// object transformations
 	glm::mat4 model;
 	model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
-	shaderProgram.setMat4("model", model);
+	objShader.setMat4("model", model);
 
 	// draw objects
 	object.render();
+
+	// draw lamp
+	lampShader.use();
+	lampShader.setMat4("projection", projection);
+	lampShader.setMat4("view", view);
+	lampShader.setVec3("lightColor", lightColor);
+
+	model = glm::mat4();
+	model = glm::translate(model, lightPos);
+	lampShader.setMat4("model", model);
+
+	lamp.render();
 
 	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 	// -------------------------------------------------------------------------------

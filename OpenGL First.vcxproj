@@ -143,8 +143,10 @@
     <ClInclude Include="TriangleSoup.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\shader.frag" />
-    <None Include="shaders\shader.vert" />
+    <None Include="shaders\lamp.frag" />
+    <None Include="shaders\lamp.vert" />
+    <None Include="shaders\diffuseShader.frag" />
+    <None Include="shaders\diffuseShader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

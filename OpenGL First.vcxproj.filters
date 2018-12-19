@@ -43,10 +43,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\shader.frag">
+    <None Include="shaders\lamp.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="shaders\shader.vert">
+    <None Include="shaders\lamp.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="shaders\diffuseShader.frag">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="shaders\diffuseShader.vert">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>
