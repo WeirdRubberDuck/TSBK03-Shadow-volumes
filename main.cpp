@@ -43,14 +43,15 @@ float lastFrame = 0.0f;
 Shader objShader, lampShader;
 
 // objects
-TriangleSoup object, lamp;
+TriangleSoup object, lamp, ground;
 
 // lighting
-glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+glm::vec3 lightPos(1.2f, 2.0f, 3.0f);
 
 // colors
 glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 glm::vec3 objectColor(1.0f, 0.5f, 0.2f);
+glm::vec3 groundColor(0.8f, 0.8f, 0.8f);
 
 //----------------------Main----------------------------------------------------
 int main()
@@ -122,8 +123,9 @@ void init()
 
 	// Create geometry for rendering
 	// -----------------------------
-	object.createBox(0.5, 0.5, 0.2);
-	lamp.createSphere(0.1, 10);
+	object.createBox(0.5f, 0.5f, 0.2f);
+	lamp.createSphere(0.1f, 10);
+	ground.createBox(5.0f, 0.01f, 5.0f);
 
 	// Load and compile shaders
 	// ------------------------
@@ -146,7 +148,7 @@ void display(GLFWwindow* window)
 
 	// activate shader program
 	objShader.use();
-	objShader.setVec3("objectColor", objectColor);
+	
 	objShader.setVec3("lightColor", lightColor);
 	objShader.setVec3("lightPos", lightPos);
 
@@ -159,13 +161,26 @@ void display(GLFWwindow* window)
 	glm::mat4 view = camera.GetViewMatrix();
 	objShader.setMat4("view", view);
 
-	// object transformations
+	// Matrix used for object transformations in world space
 	glm::mat4 model;
+
+	// draw objects
+	model = glm::mat4();
 	model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
 	objShader.setMat4("model", model);
 
-	// draw objects
+	objShader.setVec3("objectColor", objectColor);
 	object.render();
+
+	// draw ground
+
+	model = glm::mat4();
+	model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
+
+	objShader.setMat4("model", model);
+	objShader.setVec3("objectColor", groundColor);
+
+	ground.render();
 
 	// draw lamp
 	lampShader.use();
@@ -237,8 +252,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 	// Rotate camera based on mouse input
 	if (currentLeft && lastLeft) { // If a left button drag is in progress
-		double moveX = xpos - lastX;
-		double moveY = lastY - ypos;	// Inverted
+		float moveX = xpos - lastX;
+		float moveY = lastY - ypos;	// Inverted
 		camera.ProcessMouseMovement(moveX, moveY);
 	}
 
