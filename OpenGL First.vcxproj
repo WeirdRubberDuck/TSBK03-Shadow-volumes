@@ -143,6 +143,9 @@
     <ClInclude Include="TriangleSoup.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\geomShader.frag" />
+    <None Include="shaders\geomShader.geom" />
+    <None Include="shaders\geomShader.vert" />
     <None Include="shaders\lamp.frag" />
     <None Include="shaders\lamp.vert" />
     <None Include="shaders\diffuseShader.frag" />

@@ -19,8 +19,10 @@ public:
 	// constructor reads and builds the shader
 	Shader() = default;
 	Shader(const char* vertexPath, const char* fragmentPath);
+	Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath);
 
 	void create(const char* vertexPath, const char* fragmentPath);
+	void create(const char* vertexPath, const char* fragmentPath, const char* geometryPath);
 
 	// use/activate the shader
 	void use();
@@ -40,6 +42,8 @@ public:
 	void setMat4(const std::string &name, const glm::mat4 &mat) const;
 
 private:
+	std::string readShaderFile(const char* shaderPath);
+	void compile(const char * vShaderCode, const char * fShaderCode, const char * gShaderCode = nullptr);
 	void checkCompileErrors(unsigned int shader, std::string type);
 };
 

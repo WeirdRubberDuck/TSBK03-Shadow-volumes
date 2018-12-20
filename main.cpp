@@ -40,7 +40,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // shaders
-Shader objShader, lampShader;
+Shader objShader, lampShader, geomShader;
 
 // objects
 TriangleSoup object, lamp, ground;
@@ -131,6 +131,7 @@ void init()
 	// ------------------------
 	objShader.create("shaders/diffuseShader.vert", "shaders/diffuseShader.frag");
 	lampShader.create("shaders/lamp.vert", "shaders/lamp.frag");
+	geomShader.create("shaders/geomShader.vert", "shaders/geomShader.frag", "shaders/geomShader.geom");
 
 }
 
@@ -172,8 +173,15 @@ void display(GLFWwindow* window)
 	objShader.setVec3("objectColor", objectColor);
 	object.render();
 
-	// draw ground
+	// Draw normals of objects using geometry shader
+	geomShader.use();
+	geomShader.setMat4("projection", projection);
+	geomShader.setMat4("view", view);
+	geomShader.setMat4("model", model);
+	object.render();
 
+	// draw ground
+	objShader.use();
 	model = glm::mat4();
 	model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
 

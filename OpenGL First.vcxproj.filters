@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\shaders">
+      <UniqueIdentifier>{3154990c-8d37-491c-8d21-cfb0cb7e10bb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -43,17 +46,26 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\lamp.frag">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shaders\lamp.vert">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="shaders\diffuseShader.frag">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\shaders</Filter>
     </None>
     <None Include="shaders\diffuseShader.vert">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\lamp.frag">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\lamp.vert">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\geomShader.frag">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\geomShader.geom">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\geomShader.vert">
+      <Filter>Source Files\shaders</Filter>
     </None>
   </ItemGroup>
 </Project>
