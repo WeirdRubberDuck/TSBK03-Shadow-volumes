@@ -10,6 +10,9 @@
 #include "TriangleSoup.hpp"
 #include "Camera.h"
 
+#include "Mesh.h"
+#include "MeshCreator.h"
+
 #include <iostream>
 
 void init();
@@ -43,7 +46,7 @@ float lastFrame = 0.0f;
 Shader objShader, lampShader, geomShader;
 
 // objects
-TriangleSoup object, lamp, ground;
+Mesh object, lamp, ground;
 
 // lighting
 glm::vec3 lightPos(1.2f, 2.0f, 3.0f);
@@ -123,16 +126,16 @@ void init()
 
 	// Create geometry for rendering
 	// -----------------------------
-	object.createBox(0.5f, 0.5f, 0.2f);
-	lamp.createSphere(0.1f, 10);
-	ground.createBox(5.0f, 0.01f, 5.0f);
+	//object = MeshCreator::createBox(0.5f, 0.5f, 0.2f);
+	object = MeshCreator::readOBJ("meshes/teapot_coarse.obj");
+	lamp = MeshCreator::createSphere(0.1f, 10);
+	ground = MeshCreator::createBox(5.0f, 0.01f, 5.0f);
 
 	// Load and compile shaders
 	// ------------------------
 	objShader.create("shaders/diffuseShader.vert", "shaders/diffuseShader.frag");
 	lampShader.create("shaders/lamp.vert", "shaders/lamp.frag");
 	geomShader.create("shaders/geomShader.vert", "shaders/geomShader.frag", "shaders/geomShader.geom");
-
 }
 
 // Display function - draws and renders!
@@ -167,6 +170,8 @@ void display(GLFWwindow* window)
 
 	// draw objects
 	model = glm::mat4();
+	float scale = 0.03f;
+	model = glm::scale(model, glm::vec3(scale, scale, scale)); // Teapot is superhuge!!
 	model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
 	objShader.setMat4("model", model);
 
