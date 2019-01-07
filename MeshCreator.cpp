@@ -22,7 +22,7 @@ Mesh MeshCreator::createTriangle()
 		0,1,2
 	};
 
-	return Mesh(vertices, indices);
+	return Mesh(vertices, indices, 1);
 }
 
 /* Create a box with the dimension xsize * ysize * zsize */
@@ -109,7 +109,7 @@ Mesh MeshCreator::createBox(float xsize, float ysize, float zsize)
 		5,20,8
 	};
 
-	return Mesh(vertices, indices);
+	return Mesh(vertices, indices, ntris);
 }
 
 /*
@@ -220,7 +220,7 @@ Mesh MeshCreator::createSphere(float radius, int segments) {
 		indices[base + 3 * i + 2] = nverts - 3 - i;
 	}
 
-	return Mesh(vertices, indices);
+	return Mesh(vertices, indices, ntris);
 }
 
 /*
@@ -405,5 +405,5 @@ Mesh MeshCreator::readOBJ(const char* filename) {
 	printf("loadObj(\"%s\"): found %d vertices, %d normals, %d texcoords, %d faces.\n",
 		filename, numverts, numnormals, numtexcoords, numfaces);
 
-	return Mesh(vertices, indices);
+	return Mesh(vertices, indices, ntris);
 }
