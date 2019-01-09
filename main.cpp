@@ -7,7 +7,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Shader.h"
-#include "TriangleSoup.hpp"
 #include "Camera.h"
 
 #include "Mesh.h"
@@ -43,7 +42,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // shaders
-Shader objShader, lampShader, geomShader;
+Shader objShader, lampShader, geomShader, shadowVolumeShader;
 
 // objects
 Mesh object, lamp, ground;
@@ -126,8 +125,9 @@ void init()
 
 	// Create geometry for rendering
 	// -----------------------------
-	//object = MeshCreator::createBox(0.5f, 0.5f, 0.2f);
-	object = MeshCreator::readOBJ("meshes/teapot_coarse.obj");
+	object = MeshCreator::createBox(0.5f, 0.5f, 0.2f);
+	//object = MeshCreator::readOBJ("meshes/teapot_coarse.obj");
+	object.useAdjacency();
 	lamp = MeshCreator::createSphere(0.1f, 10);
 	ground = MeshCreator::createBox(5.0f, 0.01f, 5.0f);
 
@@ -136,6 +136,7 @@ void init()
 	objShader.create("shaders/diffuseShader.vert", "shaders/diffuseShader.frag");
 	lampShader.create("shaders/lamp.vert", "shaders/lamp.frag");
 	geomShader.create("shaders/geomShader.vert", "shaders/geomShader.frag", "shaders/geomShader.geom");
+	shadowVolumeShader.create("shaders/shadowVolume.vert", "shaders/shadowVolume.frag", "shaders/shadowVolume.geom");
 }
 
 // Display function - draws and renders!
@@ -170,8 +171,8 @@ void display(GLFWwindow* window)
 
 	// draw objects
 	model = glm::mat4();
-	float scale = 0.03f;
-	model = glm::scale(model, glm::vec3(scale, scale, scale)); // Teapot is superhuge!!
+	//float scale = 0.03f;
+	//model = glm::scale(model, glm::vec3(scale, scale, scale)); // Teapot is superhuge!!
 	model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
 	objShader.setMat4("model", model);
 
@@ -179,10 +180,18 @@ void display(GLFWwindow* window)
 	object.render();
 
 	// Draw normals of objects using geometry shader
-	geomShader.use();
-	geomShader.setMat4("projection", projection);
-	geomShader.setMat4("view", view);
-	geomShader.setMat4("model", model);
+	//geomShader.use();
+	//geomShader.setMat4("projection", projection);
+	//geomShader.setMat4("view", view);
+	//geomShader.setMat4("model", model);
+	//object.render();
+
+	// Render shadow volume
+	shadowVolumeShader.use();
+	shadowVolumeShader.setVec3("lightPos", lightPos);
+	shadowVolumeShader.setMat4("projection", projection);
+	shadowVolumeShader.setMat4("view", view);
+	shadowVolumeShader.setMat4("model", model);
 	object.render();
 
 	// draw ground
@@ -245,6 +254,17 @@ void processInput(GLFWwindow *window)
 		camera.ProcessKeyboard(LEFT, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+
+	// Light position
+	float deltaStep = 0.001f;
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+		lightPos += glm::vec3(0.0f, deltaStep * 1.0f, 0.0f);
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		lightPos += glm::vec3(0.0f, deltaStep * (-1.0f), 0.0f);
+	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		lightPos += glm::vec3( deltaStep * (-1.0f), 0.0f, 0.0f);
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		lightPos += glm::vec3( deltaStep * 1.0f, 0.0f, 0.0f);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes

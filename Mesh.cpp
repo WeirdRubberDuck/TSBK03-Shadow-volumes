@@ -191,5 +191,5 @@ int Mesh::findAdjacentVertexIdx(GLuint startIdx, GLuint endIdx, GLuint oppIdx)
 		}
 	}
 
-	return -1; // no neighbor found
+	return 0;// -1; // no neighbor found
 }

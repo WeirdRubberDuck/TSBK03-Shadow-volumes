@@ -134,13 +134,15 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="MeshCreator.cpp" />
     <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="TriangleSoup.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="MeshCreator.h" />
     <ClInclude Include="Shader.h" />
-    <ClInclude Include="TriangleSoup.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\geomShader.frag" />
@@ -150,6 +152,9 @@
     <None Include="shaders\lamp.vert" />
     <None Include="shaders\diffuseShader.frag" />
     <None Include="shaders\diffuseShader.vert" />
+    <None Include="shaders\shadowVolume.frag" />
+    <None Include="shaders\shadowVolume.geom" />
+    <None Include="shaders\shadowVolume.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
