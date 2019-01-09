@@ -20,16 +20,16 @@ class MeshCreator {
 
 public:
 
-	/* Create a simple triangle */
+	// Create a simple triangle 
 	static Mesh createTriangle();
 
-	/* Create a box with the dimension xsize * ysize * zsize */
+	// Create a box with the dimension xsize * ysize * zsize 
 	static Mesh createBox(float xsize, float ysize, float zsize);
 
-	/* Create a sphere (approximated by polygon segments) */
+	// Create a sphere (approximated by polygon segments)
 	static Mesh createSphere(float radius, int segments);
 
-	/* Load geometry from an OBJ file */
+	// Load geometry from an OBJ file 
 	static Mesh readOBJ(const char* filename);
 
 };
