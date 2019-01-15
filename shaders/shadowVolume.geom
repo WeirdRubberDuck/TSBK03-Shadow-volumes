@@ -7,11 +7,10 @@ uniform vec3 lightPos;
 // TODO: multiply these on CPU instead?
 uniform mat4 projection;
 uniform mat4 view;
-uniform mat4 model;
 
 float EPSILON = 0.0001;
 
-mat4 PVM = projection * view;// * model ; // Model = world transformation // OBS!! CORRECT??
+mat4 PVM = projection * view;
 
 void ExtrudeEdge(vec3 startVertex, vec3 endVertex)
 {
@@ -52,11 +51,11 @@ void main()
     edge[4] = vertPos[3] - vertPos[2];
     edge[5] = vertPos[5] - vertPos[4];
 
-	vec3 normal = cross(edge[0],edge[1]); // normal of main triangle
-	vec3 lightDir = vertPos[0] - lightPos;
+	vec3 mainNormal = cross(edge[0],edge[1]); // normal of main triangle
+	vec3 lightDir = normalize(vertPos[0] - lightPos);
 
 	// if main triangle not facing light, ignore (do nothing)
-	if (dot(normal, lightDir) <= 0) return;
+	if (dot(mainNormal, lightDir) > 0) return;
 
 	// If it does, check its edges and extrude if needed
 	for (int i = 0; i < 3; i++) {
@@ -66,7 +65,7 @@ void main()
 		int end = (i*2+2) % 6; 
 		
 		// compute normal of neighbor triangle (same in each vertex)
-		normal = cross(edge[i+3], edge[i]); 
+		vec3 normal = cross(edge[i+3], edge[i]); 
 
 		// compute light direction in each vertex pos
 		lightDirs[0] = normalize(vertPos[start] - lightPos);
@@ -74,11 +73,24 @@ void main()
 		lightDirs[2] = normalize(vertPos[end] - lightPos);
 
 		// Extrude if possible silhuette (neighbor triangle does not face light)	// TODO: implement code for no neighbor
-		if(dot(normal, lightDirs[0]) <= 0 )
-		{
+		if(dot(normal, lightDirs[0]) > 0 ) {
 			ExtrudeEdge(vertPos[start], vertPos[end]);
 		}
-
-		// TODO: Render caps
 	} 
+
+	// Render front cap 
+	for (int i = 0; i < 3; i++) {
+		lightDir = normalize(vertPos[2*i] - lightPos);
+		gl_Position = PVM* vec4((vertPos[2*i] + lightDir * EPSILON), 1.0);
+		EmitVertex();
+	}
+	EndPrimitive();
+
+	// Render back cap 
+	for (int i = 0; i < 3; i++) {
+		lightDir = vertPos[2*i] - lightPos;
+		gl_Position = PVM* vec4(lightDir, 0.0);
+		EmitVertex();
+	}
+	EndPrimitive();
 } 
