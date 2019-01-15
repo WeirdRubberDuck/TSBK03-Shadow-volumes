@@ -82,5 +82,17 @@
     <None Include="shaders\shadowVolume.vert">
       <Filter>Source Files\shaders</Filter>
     </None>
+    <None Include="shaders\ambientShader.frag">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\ambientShader.vert">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\depthShader.frag">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\depthShader.vert">
+      <Filter>Source Files\shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

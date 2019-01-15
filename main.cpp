@@ -5,10 +5,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include "Shader.h"
 #include "Camera.h"
-
 #include "Mesh.h"
 #include "MeshCreator.h"
 
@@ -16,11 +16,14 @@
 
 void init();
 void display(GLFWwindow* window);
+void drawShadowVolume();
+void drawScene(Shader & objShader, Shader & lampShader);
+
 void createWindow(const unsigned int height, const unsigned int width, const char* name);
+void processInput(GLFWwindow *window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow *window);
 
 //----------------------Globals-------------------------------------------------
 // settings
@@ -42,7 +45,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // shaders
-Shader objShader, lampShader, geomShader, shadowVolumeShader;
+Shader ambientShader, depthShader, objShader, lampShader, geomShader, shadowVolumeShader;
 
 // objects
 Mesh object, lamp, ground;
@@ -54,6 +57,10 @@ glm::vec3 lightPos(1.2f, 2.0f, 3.0f);
 glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 glm::vec3 objectColor(1.0f, 0.5f, 0.2f);
 glm::vec3 groundColor(0.8f, 0.8f, 0.8f);
+
+// matrices
+glm::mat4 projection, view;
+glm::mat4 objMatrix, groundMatrix, lampMatrix;
 
 //----------------------Main----------------------------------------------------
 int main()
@@ -119,7 +126,7 @@ void init()
 	glfwGetCursorPos(window, &lastX, &lastY);
 
 	// GL inits
-	glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+	glClearColor(0.1f, 0.2f, 0.2f, 1.0f);
 	glEnable(GL_DEPTH_TEST); // OBS! Depth test requires depth buffer...
 	glDisable(GL_CULL_FACE);
 
@@ -127,12 +134,22 @@ void init()
 	// -----------------------------
 	object = MeshCreator::createBox(0.5f, 0.5f, 0.2f);
 	//object = MeshCreator::readOBJ("meshes/teapot_coarse.obj");
+	//object = MeshCreator::createSphere(20.0f, 10);
 	object.useAdjacency();
 	lamp = MeshCreator::createSphere(0.1f, 10);
 	ground = MeshCreator::createBox(5.0f, 0.01f, 5.0f);
 
+	// Create static transformation matrices
+	// -------------------------------------
+	projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+	view = camera.GetViewMatrix(); // OBS! Has to be updated later
+	groundMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, -1.0f, 0.0f));
+	lampMatrix = glm::translate(glm::mat4(), lightPos);
+
 	// Load and compile shaders
 	// ------------------------
+	ambientShader.create("shaders/ambientShader.vert", "shaders/ambientShader.frag");
+	depthShader.create("shaders/depthShader.vert", "shaders/depthShader.frag");
 	objShader.create("shaders/diffuseShader.vert", "shaders/diffuseShader.frag");
 	lampShader.create("shaders/lamp.vert", "shaders/lamp.frag");
 	geomShader.create("shaders/geomShader.vert", "shaders/geomShader.frag", "shaders/geomShader.geom");
@@ -149,77 +166,121 @@ void display(GLFWwindow* window)
 
 	// render
 	// ------
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	// activate shader program
-	objShader.use();
-	
-	objShader.setVec3("lightColor", lightColor);
-	objShader.setVec3("lightPos", lightPos);
+	// update matrices
+	// ---------------
+	view = camera.GetViewMatrix();
 
-	// perspective projection transformation
-	glm::mat4 projection;
-	projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-	objShader.setMat4("projection", projection);
-
-	// camera/view transformation
-	glm::mat4 view = camera.GetViewMatrix();
-	objShader.setMat4("view", view);
-
-	// Matrix used for object transformations in world space
-	glm::mat4 model;
-
-	// draw objects
-	model = glm::mat4();
+	// Matrices used for object transformations in world space
+	objMatrix = glm::mat4();
 	//float scale = 0.03f;
-	//model = glm::scale(model, glm::vec3(scale, scale, scale)); // Teapot is superhuge!!
-	model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
-	objShader.setMat4("model", model);
+	//objTransMatrix = glm::scale(objTransMatrix, glm::vec3(scale, scale, scale)); // Teapot is superhuge!!
+	objMatrix = glm::rotate(objMatrix, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
 
-	objShader.setVec3("objectColor", objectColor);
-	object.render();
+	// Ambient pass: To make sure z-buffer contains data
+	// ----------------------------------------
+	drawScene(ambientShader, ambientShader);
 
-	// Draw normals of objects using geometry shader
-	//geomShader.use();
-	//geomShader.setMat4("projection", projection);
-	//geomShader.setMat4("view", view);
-	//geomShader.setMat4("model", model);
-	//object.render();
+	// Create shadow volumes of objects and render into the stencil buffer 
+	// ------------------------------------------------------------------
 
-	// Render shadow volume
-	shadowVolumeShader.use();
-	shadowVolumeShader.setVec3("lightPos", lightPos);
-	shadowVolumeShader.setMat4("projection", projection);
-	shadowVolumeShader.setMat4("view", view);
-	shadowVolumeShader.setMat4("model", model);
-	object.render();
+	glEnable(GL_STENCIL_TEST);
 
-	// draw ground
-	objShader.use();
-	model = glm::mat4();
-	model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
+	// need stencil test to be enabled but we want it to succeed always. 
+	// Only the depth test matters.
+	glStencilFunc(GL_ALWAYS, 0, 0xFF);  // Set all stencil values to 0
 
-	objShader.setMat4("model", model);
-	objShader.setVec3("objectColor", groundColor);
+	// TODO: If camera is inside shadow volume, init with 1 instead
 
-	ground.render();
+	// Depth testing and face culling required
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_CULL_FACE);
 
-	// draw lamp
-	lampShader.use();
-	lampShader.setMat4("projection", projection);
-	lampShader.setMat4("view", view);
-	lampShader.setVec3("lightColor", lightColor);
+	// Do not render to depth or color buffer 
+	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+	glDepthMask(GL_FALSE);
 
-	model = glm::mat4();
-	model = glm::translate(model, lightPos);
-	lampShader.setMat4("model", model);
+	// front triangles: increment if depth test fails (zfail)
+	glCullFace(GL_FRONT);
+	glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);  
+	drawShadowVolume();
 
-	lamp.render();
+	// back triangles: decrement if depth test fails (caps)
+	glCullFace(GL_BACK);
+	glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);		
+	drawShadowVolume();
+
+
+	// Render the scene again, using lightning and the stencil buffer as a mask for shadows
+	// ------------------------------------------------------------------------------------
+
+	// Enable color buffer again
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+	// Depth test only pass if depth value is the same as in ambient pass
+	glDepthFunc(GL_EQUAL);
+
+	// Disable cull face again, to be able to see inside of rendered objects
+	glDisable(GL_CULL_FACE);
+
+	// only draw if corresponding value in stencil buffer is zero
+	glStencilFunc(GL_EQUAL, 0x0, 0xFF);
+
+	// prevent update to the stencil buffer
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+	drawScene(objShader, lampShader);
+
+	// Clean up: Reset some things needed for the ambient pass next frame
+	// ------------------------------------------------------------------
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LEQUAL);
+
+	glDisable(GL_STENCIL_TEST);
 
 	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 	// -------------------------------------------------------------------------------
 	glfwSwapBuffers(window);
 	glfwPollEvents();
+}
+
+void drawShadowVolume()
+{
+	shadowVolumeShader.use();
+	shadowVolumeShader.setVec3("lightPos", lightPos);
+	shadowVolumeShader.setMat4("projection", projection);
+	shadowVolumeShader.setMat4("view", view);
+	shadowVolumeShader.setMat4("model", objMatrix);
+	object.render();
+}
+
+void drawScene(Shader & objShader, Shader & lampShader)
+{
+	objShader.use();
+	objShader.setVec3("lightColor", lightColor);
+	objShader.setVec3("lightPos", lightPos);
+	objShader.setMat4("projection", projection);
+	objShader.setMat4("view", view);
+
+	// ground
+	objShader.setMat4("model", groundMatrix);
+	objShader.setVec3("objectColor", groundColor);
+	ground.render();
+
+	// objects
+	objShader.setMat4("model", objMatrix);
+	objShader.setVec3("objectColor", objectColor);
+	object.render();
+
+	// lamp
+	lampShader.use();
+	lampShader.setMat4("projection", projection);
+	lampShader.setMat4("view", view);
+	lampShader.setVec3("lightColor", lightColor);
+	lampShader.setMat4("model", lampMatrix);
+	lamp.render();
 }
 
 // glfw window creation

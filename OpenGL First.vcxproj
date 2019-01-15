@@ -145,6 +145,8 @@
     <ClInclude Include="Shader.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\ambientShader.frag" />
+    <None Include="shaders\ambientShader.vert" />
     <None Include="shaders\geomShader.frag" />
     <None Include="shaders\geomShader.geom" />
     <None Include="shaders\geomShader.vert" />
@@ -152,6 +154,8 @@
     <None Include="shaders\lamp.vert" />
     <None Include="shaders\diffuseShader.frag" />
     <None Include="shaders\diffuseShader.vert" />
+    <None Include="shaders\depthShader.frag" />
+    <None Include="shaders\depthShader.vert" />
     <None Include="shaders\shadowVolume.frag" />
     <None Include="shaders\shadowVolume.geom" />
     <None Include="shaders\shadowVolume.vert" />
