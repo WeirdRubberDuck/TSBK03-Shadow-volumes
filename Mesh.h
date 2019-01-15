@@ -39,8 +39,6 @@ struct CompVectors
 	}
 };
 
-typedef map<glm::vec3, unsigned int, CompVectors> PosMap;
-
 // Helper structure for vertex information
 struct Vertex {
 	// position
@@ -86,12 +84,12 @@ private:
 	// Render data  
 	GLuint VBO, EBO;
 
-	int ntris; // The number of triangles/faces
+	unsigned int ntris; // The number of triangles/faces
 
 	// Adjacency data
 	bool adjacency = false;
 	vector<GLuint> indices_adjacency;
-	PosMap pos_index_map; // Maps one unique index for every vertex position vector
+	map<glm::vec3, unsigned int, CompVectors> pos_index_map; // Maps one unique index for every vertex position vector
 
 	// initializes all the buffer objects/arrays 
 	void setupMesh();
