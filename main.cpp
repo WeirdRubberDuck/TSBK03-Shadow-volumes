@@ -16,9 +16,8 @@
 
 void init();
 void display(GLFWwindow* window);
-void drawShadowVolume();
+void drawShadowVolumes();
 void drawScene(Shader & objShader, Shader & lampShader);
-
 void createWindow(const unsigned int height, const unsigned int width, const char* name);
 void processInput(GLFWwindow *window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -48,19 +47,23 @@ float lastFrame = 0.0f;
 Shader ambientShader, depthShader, objShader, lampShader, geomShader, shadowVolumeShader;
 
 // objects
-Mesh object, lamp, ground;
+Mesh object, object2, lamp;
+Mesh ground, rightWall, leftWall, backWall;
 
 // lighting
 glm::vec3 lightPos(1.2f, 2.0f, 3.0f);
 
 // colors
 glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-glm::vec3 objectColor(1.0f, 0.5f, 0.2f);
-glm::vec3 groundColor(0.8f, 0.8f, 0.8f);
+glm::vec3 groundColor(0.6f, 0.6f, 0.6f);
+
+glm::vec3 orange(1.0f, 0.5f, 0.2f);
+glm::vec3 green(0.0f, 0.5f, 0.2f);
 
 // matrices
+float WALLSIZE = 4.0f;
 glm::mat4 projection, view;
-glm::mat4 objMatrix, groundMatrix, lampMatrix;
+glm::mat4 objMat, obj2Mat, lampMat;
 
 //----------------------Main----------------------------------------------------
 int main()
@@ -135,16 +138,23 @@ void init()
 	object = MeshCreator::createBox(0.5f, 0.5f, 0.2f);
 	//object = MeshCreator::readOBJ("meshes/teapot_coarse.obj");
 	//object = MeshCreator::createSphere(20.0f, 10);
-	object.useAdjacency();
+	object2 = MeshCreator::createBox(0.3f, 01.0f, 0.2f);
 	lamp = MeshCreator::createSphere(0.1f, 10);
-	ground = MeshCreator::createBox(5.0f, 0.01f, 5.0f);
+
+	ground = MeshCreator::createBox(WALLSIZE, 0.01f, WALLSIZE);
+	rightWall = MeshCreator::createBox(0.01f, WALLSIZE, WALLSIZE);
+	leftWall = MeshCreator::createBox(0.01f, WALLSIZE, WALLSIZE);
+	backWall = MeshCreator::createBox(WALLSIZE, WALLSIZE, 0.01f);
+
+	// Generate adjacency information for occluders
+	object.useAdjacency();
+	object2.useAdjacency();
 
 	// Create static transformation matrices
 	// -------------------------------------
 	projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-	view = camera.GetViewMatrix(); // OBS! Has to be updated later
-	groundMatrix = glm::translate(glm::mat4(), glm::vec3(0.0f, -1.0f, 0.0f));
-	lampMatrix = glm::translate(glm::mat4(), lightPos);
+
+	obj2Mat = glm::translate(glm::mat4(), glm::vec3(0.0f, 0.0f, -2.0f));
 
 	// Load and compile shaders
 	// ------------------------
@@ -173,10 +183,12 @@ void display(GLFWwindow* window)
 	view = camera.GetViewMatrix();
 
 	// Matrices used for object transformations in world space
-	objMatrix = glm::mat4();
+	objMat = glm::mat4();
 	//float scale = 0.03f;
 	//objTransMatrix = glm::scale(objTransMatrix, glm::vec3(scale, scale, scale)); // Teapot is superhuge!!
-	objMatrix = glm::rotate(objMatrix, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+	objMat = glm::rotate(objMat, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	lampMat = glm::translate(glm::mat4(), lightPos);
 
 	// Ambient pass: To make sure z-buffer contains data
 	// ----------------------------------------
@@ -195,23 +207,33 @@ void display(GLFWwindow* window)
 
 	// Depth testing and face culling required
 	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
 	glEnable(GL_CULL_FACE);
+
+	// Clamp depth values at infinity to max depth. Required for back cap of volume to be included
+	// (Obs! requires depth test GL_EQUAL to include max value. GL_LESS is not enough)
+	glDepthFunc(GL_LEQUAL); 
+	glEnable(GL_DEPTH_CLAMP);
 
 	// Do not render to depth or color buffer 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glDepthMask(GL_FALSE);
 
+	// TEST: draw shadow volume
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
 	// front triangles: increment if depth test fails (zfail)
 	glCullFace(GL_FRONT);
 	glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);  
-	drawShadowVolume();
+	drawShadowVolumes();
 
 	// back triangles: decrement if depth test fails (caps)
 	glCullFace(GL_BACK);
 	glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);		
-	drawShadowVolume();
+	drawShadowVolumes();
 
+	// Disable depth clamping
+	glDisable(GL_DEPTH_CLAMP);
 
 	// Render the scene again, using lightning and the stencil buffer as a mask for shadows
 	// ------------------------------------------------------------------------------------
@@ -246,16 +268,24 @@ void display(GLFWwindow* window)
 	glfwPollEvents();
 }
 
-void drawShadowVolume()
+// render the shadow volumes of the occluders in the scene
+// -------------------------------------------------------
+void drawShadowVolumes()
 {
 	shadowVolumeShader.use();
 	shadowVolumeShader.setVec3("lightPos", lightPos);
 	shadowVolumeShader.setMat4("projection", projection);
 	shadowVolumeShader.setMat4("view", view);
-	shadowVolumeShader.setMat4("model", objMatrix);
+
+	shadowVolumeShader.setMat4("model", objMat);
 	object.render();
+
+	shadowVolumeShader.setMat4("model", obj2Mat);
+	object2.render();
 }
 
+// render the scene using the passed shaders
+// -----------------------------------------
 void drawScene(Shader & objShader, Shader & lampShader)
 {
 	objShader.use();
@@ -264,22 +294,35 @@ void drawScene(Shader & objShader, Shader & lampShader)
 	objShader.setMat4("projection", projection);
 	objShader.setMat4("view", view);
 
-	// ground
-	objShader.setMat4("model", groundMatrix);
+	// ground and walls
 	objShader.setVec3("objectColor", groundColor);
+	objShader.setMat4("model", glm::translate(glm::mat4(), glm::vec3(0.0f, -1.0f, 0.0f)));
 	ground.render();
 
+	objShader.setMat4("model", glm::translate(glm::mat4(), glm::vec3(WALLSIZE, WALLSIZE - 1.0f, 0.0f)));
+	rightWall.render();
+
+	//objShader.setMat4("model", glm::translate(glm::mat4(), glm::vec3(-WALLSIZE, WALLSIZE - 1.0f, 0.0f)));
+	//leftWall.render();
+
+	objShader.setMat4("model", glm::translate(glm::mat4(), glm::vec3(0.0f, WALLSIZE - 1.0f,- WALLSIZE)));
+	backWall.render();
+
 	// objects
-	objShader.setMat4("model", objMatrix);
-	objShader.setVec3("objectColor", objectColor);
+	objShader.setMat4("model", objMat);
+	objShader.setVec3("objectColor", orange);
 	object.render();
+
+	objShader.setMat4("model", obj2Mat);
+	objShader.setVec3("objectColor", green);
+	object2.render();
 
 	// lamp
 	lampShader.use();
 	lampShader.setMat4("projection", projection);
 	lampShader.setMat4("view", view);
 	lampShader.setVec3("lightColor", lightColor);
-	lampShader.setMat4("model", lampMatrix);
+	lampShader.setMat4("model", lampMat);
 	lamp.render();
 }
 
