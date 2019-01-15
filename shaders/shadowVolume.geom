@@ -8,7 +8,7 @@ uniform vec3 lightPos;
 uniform mat4 projection;
 uniform mat4 view;
 
-float EPSILON = 0.0001;
+float EPSILON = 0.001;
 
 mat4 PVM = projection * view;
 
