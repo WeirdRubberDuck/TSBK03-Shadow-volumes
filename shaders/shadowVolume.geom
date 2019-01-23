@@ -4,11 +4,10 @@ layout (triangle_strip, max_vertices = 18) out;
 
 uniform vec3 lightPos;
 
-// TODO: multiply these on CPU instead?
 uniform mat4 projection;
 uniform mat4 view;
 
-float EPSILON = 0.001;
+float EPSILON = 0.01;
 
 mat4 PVM = projection * view;
 
@@ -25,7 +24,7 @@ void ExtrudeEdge(vec3 startVertex, vec3 endVertex)
 	lightDir = normalize(endVertex - lightPos);
     gl_Position = PVM * vec4((endVertex + lightDir * EPSILON), 1.0);
     EmitVertex();
-	gl_Position = PVM * vec4(lightDir , 0.0);
+	gl_Position = PVM * vec4(lightDir, 0.0);
     EmitVertex();
 
     EndPrimitive();
