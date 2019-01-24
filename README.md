@@ -22,7 +22,7 @@ Below is some result images of the project at 2019-01-23. What is not visible in
 
 <br/>
 
-Notice how the occluders cast shadows on other objects in the scene, but also on themselves (second image, with torus-like object). This is one of the strengths of this method, compared to shadow mapping (which is more commonly used).
+Notice how the occluders cast shadows on other objects in the scene, but also on themselves (second image, with torus-like object).
 
 <br/> 
 
