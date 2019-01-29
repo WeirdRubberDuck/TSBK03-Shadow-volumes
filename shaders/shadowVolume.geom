@@ -86,8 +86,9 @@ void main()
 	EndPrimitive();
 
 	// Render back cap 
+	int backCapIdx[3] = int[](0, 4, 2); 
 	for (int i = 0; i < 3; i++) {
-		lightDir = vertPos[2*i] - lightPos;
+		lightDir = normalize(vertPos[backCapIdx[i]] - lightPos);
 		gl_Position = PVM* vec4(lightDir, 0.0);
 		EmitVertex();
 	}
