@@ -196,37 +196,23 @@ void display(GLFWwindow* window)
 	// Create shadow volumes of objects and render into the stencil buffer 
 	// ------------------------------------------------------------------
 	glEnable(GL_STENCIL_TEST);
+	glEnable(GL_DEPTH_TEST);
 
 	// need stencil test to be enabled but we want it to succeed always. 
 	// Only the depth test matters.
 	glStencilFunc(GL_ALWAYS, 0, 0xFF);  // Set all stencil values to 0
-
-	// TODO: If camera is inside shadow volume, init with 1 instead
 		
 	// Clamp depth values at infinity to max depth. Required for back cap of volume to be included
 	// (Obs! requires depth test GL_EQUAL to include max value. GL_LESS is not enough)
 	glEnable(GL_DEPTH_CLAMP);
 
-	// Depth testing and face culling required
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-
 	// Do not render to depth or color buffer 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glDepthMask(GL_FALSE);
 
-	// TEST: draw shadow volume
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	//glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-	// front triangles: increment if depth test fails (zfail)
-	glCullFace(GL_FRONT);
-	glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);  
-	drawShadowVolumes();
-
-	// back triangles: decrement if depth test fails (caps)
-	glCullFace(GL_BACK);
-	glStencilOp(GL_KEEP, GL_DECR, GL_KEEP);		
+	// Set stencil test according to zfail algorithm
+	glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+	glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
 	drawShadowVolumes();
 
 	// Disable depth clamping
@@ -240,9 +226,6 @@ void display(GLFWwindow* window)
 
 	// Depth test only pass if depth value is the same as in ambient pass
 	glDepthFunc(GL_EQUAL);
-
-	// Disable cull face again, to be able to see inside of rendered objects
-	glDisable(GL_CULL_FACE);
 
 	// only draw if corresponding value in stencil buffer is zero
 	glStencilFunc(GL_EQUAL, 0x0, 0xFF);
