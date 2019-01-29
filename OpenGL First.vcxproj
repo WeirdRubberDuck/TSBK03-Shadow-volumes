@@ -145,6 +145,8 @@
     <ClInclude Include="Shader.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\additiveLightShader.frag" />
+    <None Include="shaders\additiveLightShader.vert" />
     <None Include="shaders\ambientShader.frag" />
     <None Include="shaders\ambientShader.vert" />
     <None Include="shaders\geomShader.frag" />

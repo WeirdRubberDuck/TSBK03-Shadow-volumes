@@ -44,7 +44,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // shaders
-Shader ambientShader, depthShader, objShader, lampShader, geomShader, shadowVolumeShader;
+Shader ambientShader, objShader, lampShader, geomShader, shadowVolumeShader;
 
 // objects
 Mesh object, object2, lamp;
@@ -135,9 +135,9 @@ void init()
 
 	// Create geometry for rendering
 	// -----------------------------
-	object = MeshCreator::createBox(0.5f, 0.5f, 0.2f);
-	//object = MeshCreator::readOBJ("meshes/teapot_coarse.obj");
-	//object = MeshCreator::createSphere(20.0f, 10);
+	//object = MeshCreator::createBox(0.3f, 0.3f, 0.2f);
+	object = MeshCreator::readOBJ("meshes/torus_thingy.obj");
+	//object2 = MeshCreator::createSphere(0.5f, 10);
 	object2 = MeshCreator::createBox(0.3f, 01.0f, 0.2f);
 	lamp = MeshCreator::createSphere(0.1f, 10);
 
@@ -154,12 +154,11 @@ void init()
 	// -------------------------------------
 	projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
-	obj2Mat = glm::translate(glm::mat4(), glm::vec3(0.0f, 0.0f, -2.0f));
+	obj2Mat = glm::translate(glm::mat4(), glm::vec3(0.5f, 0.0f, -2.0f));
 
 	// Load and compile shaders
 	// ------------------------
 	ambientShader.create("shaders/ambientShader.vert", "shaders/ambientShader.frag");
-	depthShader.create("shaders/depthShader.vert", "shaders/depthShader.frag");
 	objShader.create("shaders/diffuseShader.vert", "shaders/diffuseShader.frag");
 	lampShader.create("shaders/lamp.vert", "shaders/lamp.frag");
 	geomShader.create("shaders/geomShader.vert", "shaders/geomShader.frag", "shaders/geomShader.geom");
@@ -184,8 +183,8 @@ void display(GLFWwindow* window)
 
 	// Matrices used for object transformations in world space
 	objMat = glm::mat4();
-	//float scale = 0.03f;
-	//objTransMatrix = glm::scale(objTransMatrix, glm::vec3(scale, scale, scale)); // Teapot is superhuge!!
+	float scale = 0.5f;
+	objMat = glm::scale(objMat, glm::vec3(scale, scale, scale)); 
 	objMat = glm::rotate(objMat, (float)glfwGetTime(), glm::vec3(1.0f, 0.0f, 0.0f));
 
 	lampMat = glm::translate(glm::mat4(), lightPos);
@@ -196,7 +195,6 @@ void display(GLFWwindow* window)
 
 	// Create shadow volumes of objects and render into the stencil buffer 
 	// ------------------------------------------------------------------
-
 	glEnable(GL_STENCIL_TEST);
 
 	// need stencil test to be enabled but we want it to succeed always. 
@@ -204,15 +202,14 @@ void display(GLFWwindow* window)
 	glStencilFunc(GL_ALWAYS, 0, 0xFF);  // Set all stencil values to 0
 
 	// TODO: If camera is inside shadow volume, init with 1 instead
+		
+	// Clamp depth values at infinity to max depth. Required for back cap of volume to be included
+	// (Obs! requires depth test GL_EQUAL to include max value. GL_LESS is not enough)
+	glEnable(GL_DEPTH_CLAMP);
 
 	// Depth testing and face culling required
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-
-	// Clamp depth values at infinity to max depth. Required for back cap of volume to be included
-	// (Obs! requires depth test GL_EQUAL to include max value. GL_LESS is not enough)
-	glDepthFunc(GL_LEQUAL); 
-	glEnable(GL_DEPTH_CLAMP);
 
 	// Do not render to depth or color buffer 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -273,9 +270,9 @@ void display(GLFWwindow* window)
 void drawShadowVolumes()
 {
 	shadowVolumeShader.use();
-	shadowVolumeShader.setVec3("lightPos", lightPos);
 	shadowVolumeShader.setMat4("projection", projection);
 	shadowVolumeShader.setMat4("view", view);
+	shadowVolumeShader.setVec3("lightPos", lightPos);
 
 	shadowVolumeShader.setMat4("model", objMat);
 	object.render();
@@ -302,8 +299,8 @@ void drawScene(Shader & objShader, Shader & lampShader)
 	objShader.setMat4("model", glm::translate(glm::mat4(), glm::vec3(WALLSIZE, WALLSIZE - 1.0f, 0.0f)));
 	rightWall.render();
 
-	//objShader.setMat4("model", glm::translate(glm::mat4(), glm::vec3(-WALLSIZE, WALLSIZE - 1.0f, 0.0f)));
-	//leftWall.render();
+	objShader.setMat4("model", glm::translate(glm::mat4(), glm::vec3(-WALLSIZE, WALLSIZE - 1.0f, 0.0f)));
+	leftWall.render();
 
 	objShader.setMat4("model", glm::translate(glm::mat4(), glm::vec3(0.0f, WALLSIZE - 1.0f,- WALLSIZE)));
 	backWall.render();
@@ -317,13 +314,19 @@ void drawScene(Shader & objShader, Shader & lampShader)
 	objShader.setVec3("objectColor", green);
 	object2.render();
 
-	// lamp
+	// draw light sources
+
 	lampShader.use();
 	lampShader.setMat4("projection", projection);
 	lampShader.setMat4("view", view);
 	lampShader.setVec3("lightColor", lightColor);
 	lampShader.setMat4("model", lampMat);
 	lamp.render();
+
+	// TEST: draw shadow volume
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//drawShadowVolumes();
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
 // glfw window creation
