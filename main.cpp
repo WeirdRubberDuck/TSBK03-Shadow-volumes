@@ -112,7 +112,13 @@ int main()
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
+		// draw scene
 		display(window);
+
+		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+		// -------------------------------------------------------------------------------
+		glfwSwapBuffers(window);
+		glfwPollEvents();
 	}
 
 	// glfw: terminate, clearing all previously allocated GLFW resources.
@@ -241,11 +247,6 @@ void display(GLFWwindow* window)
 	glDepthFunc(GL_LEQUAL);
 
 	glDisable(GL_STENCIL_TEST);
-
-	// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-	// -------------------------------------------------------------------------------
-	glfwSwapBuffers(window);
-	glfwPollEvents();
 }
 
 // render the shadow volumes of the occluders in the scene
