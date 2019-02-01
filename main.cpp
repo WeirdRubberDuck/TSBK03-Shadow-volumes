@@ -17,7 +17,8 @@
 void init();
 void display(GLFWwindow* window);
 void drawShadowVolumes();
-void drawScene(Shader & objShader, Shader & lampShader);
+void drawLightSources();
+void drawScene(Shader & objShader);
 void createWindow(const unsigned int height, const unsigned int width, const char* name);
 void processInput(GLFWwindow *window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -112,7 +113,12 @@ int main()
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
-		// draw scene
+		// input
+		// -----
+		processInput(window);
+
+		// render
+		// ------	
 		display(window);
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -143,7 +149,6 @@ void init()
 	// -----------------------------
 	//object = MeshCreator::createBox(0.3f, 0.3f, 0.2f);
 	object = MeshCreator::readOBJ("meshes/torus_thingy.obj");
-	//object2 = MeshCreator::createSphere(0.5f, 10);
 	object2 = MeshCreator::createBox(0.3f, 01.0f, 0.2f);
 	lamp = MeshCreator::createSphere(0.1f, 10);
 
@@ -159,7 +164,6 @@ void init()
 	// Create static transformation matrices
 	// -------------------------------------
 	projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-
 	obj2Mat = glm::translate(glm::mat4(), glm::vec3(0.5f, 0.0f, -2.0f));
 
 	// Load and compile shaders
@@ -175,19 +179,13 @@ void init()
 //------------------------------------------------------------------------
 void display(GLFWwindow* window)
 {
-	// input
-	// -----
-	processInput(window);
-
-	// render
-	// ------
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	// update matrices
 	// ---------------
 	view = camera.GetViewMatrix();
 
-	// Matrices used for object transformations in world space
+	// matrices used for object transformations in world space
 	objMat = glm::mat4();
 	float scale = 0.5f;
 	objMat = glm::scale(objMat, glm::vec3(scale, scale, scale)); 
@@ -197,7 +195,8 @@ void display(GLFWwindow* window)
 
 	// Ambient pass: To make sure z-buffer contains data
 	// ----------------------------------------
-	drawScene(ambientShader, ambientShader);
+	drawScene(ambientShader);
+	drawLightSources();
 
 	// Create shadow volumes of objects and render into the stencil buffer 
 	// ------------------------------------------------------------------
@@ -212,25 +211,25 @@ void display(GLFWwindow* window)
 	// (Obs! requires depth test GL_EQUAL to include max value. GL_LESS is not enough)
 	glEnable(GL_DEPTH_CLAMP);
 
-	// Do not render to depth or color buffer 
+	// do not render to depth or color buffer 
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glDepthMask(GL_FALSE);
 
-	// Set stencil test according to zfail algorithm
+	// set stencil test according to zfail algorithm
 	glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
 	glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
 	drawShadowVolumes();
 
-	// Disable depth clamping
+	// disable depth clamping
 	glDisable(GL_DEPTH_CLAMP);
 
 	// Render the scene again, using lightning and the stencil buffer as a mask for shadows
 	// ------------------------------------------------------------------------------------
 
-	// Enable color buffer again
+	// enable color buffer again
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-	// Depth test only pass if depth value is the same as in ambient pass
+	// depth test only pass if depth value is the same as in ambient pass
 	glDepthFunc(GL_EQUAL);
 
 	// only draw if corresponding value in stencil buffer is zero
@@ -239,7 +238,8 @@ void display(GLFWwindow* window)
 	// prevent update to the stencil buffer
 	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-	drawScene(objShader, lampShader);
+	drawScene(objShader);
+	drawLightSources();
 
 	// Clean up: Reset some things needed for the ambient pass next frame
 	// ------------------------------------------------------------------
@@ -265,9 +265,21 @@ void drawShadowVolumes()
 	object2.render();
 }
 
-// render the scene using the passed shaders
+// render geometry for the light sources in the scene
+// --------------------------------------------------
+void drawLightSources()
+{
+	lampShader.use();
+	lampShader.setMat4("projection", projection);
+	lampShader.setMat4("view", view);
+	lampShader.setVec3("lightColor", lightColor);
+	lampShader.setMat4("model", lampMat);
+	lamp.render();
+}
+
+// render the scene using the passed shader
 // -----------------------------------------
-void drawScene(Shader & objShader, Shader & lampShader)
+void drawScene(Shader & objShader)
 {
 	objShader.use();
 	objShader.setVec3("lightColor", lightColor);
@@ -298,16 +310,7 @@ void drawScene(Shader & objShader, Shader & lampShader)
 	objShader.setVec3("objectColor", green);
 	object2.render();
 
-	// draw light sources
-
-	lampShader.use();
-	lampShader.setMat4("projection", projection);
-	lampShader.setMat4("view", view);
-	lampShader.setVec3("lightColor", lightColor);
-	lampShader.setMat4("model", lampMat);
-	lamp.render();
-
-	// TEST: draw shadow volume
+	// shadow volume: uncomment to draw shadow volume in wireframe
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	//drawShadowVolumes();
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
