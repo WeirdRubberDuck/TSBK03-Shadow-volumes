@@ -19,7 +19,6 @@ using namespace std;
 class MeshCreator {
 
 public:
-
 	// Create a simple triangle 
 	static Mesh createTriangle();
 
@@ -31,6 +30,5 @@ public:
 
 	// Load geometry from an OBJ file 
 	static Mesh readOBJ(const char* filename);
-
 };
 #endif

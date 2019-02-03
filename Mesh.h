@@ -2,7 +2,6 @@
 #define MESH_H
 
 #include <glad/glad.h> // holds all OpenGL type declarations
-
 #include <glm/glm.hpp>
 
 #include "Shader.h"
@@ -13,8 +12,6 @@
 #include <iostream>
 #include <vector>
 #include <map>
-
-using namespace std;
 
 const glm::vec3 ZERO(0.0f, 0.0f, 0.0f);
 
@@ -54,14 +51,14 @@ struct Vertex {
 
 struct Texture {
 	GLuint id;
-	string type;
-	string path;
+	std::string type;
+	std::string path;
 };
 
 class Mesh {
 public:
 	// constructor 
-	Mesh(vector<Vertex> vertices, vector<GLuint> indices, GLuint ntris);
+	Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, GLuint ntris);
 
 	// default constructor - only used for memory allocation 
 	Mesh();
@@ -77,8 +74,8 @@ public:
 
 private:
 	//  Mesh Data  
-	vector<Vertex> vertices;
-	vector<GLuint> indices;
+	std::vector<Vertex> vertices;
+	std::vector<GLuint> indices;
 	GLuint VAO;
 	GLuint ntris; // The number of triangles/faces
 
@@ -87,8 +84,8 @@ private:
 
 	// Adjacency data
 	bool adjacency = false;
-	vector<GLuint> indicesAdjacency;
-	map<glm::vec3, GLuint, CompVectors> posIndexMap; // Maps one unique index for every vertex position vector
+	std::vector<GLuint> indicesAdjacency;
+	std::map<glm::vec3, GLuint, CompVectors> posIndexMap; // Maps one unique index for every vertex position vector
 
 	// initializes all the buffer objects/arrays 
 	void setupMesh();

@@ -1,7 +1,7 @@
 #include "Mesh.h"
 
 // constructor
-Mesh::Mesh(vector<Vertex> vertices, vector<GLuint> indices, GLuint ntris)
+Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, GLuint ntris)
 {
 	this->vertices = vertices;
 	this->indices = indices;
@@ -99,7 +99,7 @@ void Mesh::setupMesh()
 // Create the data structures used for rendering triangles with adjacency info
 void Mesh::genAdjacencyInfo()
 {
-	vector<GLuint> newIndices(6 * ntris);
+	std::vector<GLuint> newIndices(6 * ntris);
 
 	// Generate map that maps each vertex position to a unique index
 	genUniqueIndexMap();
