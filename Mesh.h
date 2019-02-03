@@ -53,7 +53,7 @@ struct Vertex {
 };
 
 struct Texture {
-	unsigned int id;
+	GLuint id;
 	string type;
 	string path;
 };
@@ -61,7 +61,7 @@ struct Texture {
 class Mesh {
 public:
 	// constructor 
-	Mesh(vector<Vertex> vertices, vector<unsigned int> indices, unsigned int ntris);
+	Mesh(vector<Vertex> vertices, vector<GLuint> indices, GLuint ntris);
 
 	// default constructor - only used for memory allocation 
 	Mesh();
@@ -80,22 +80,24 @@ private:
 	vector<Vertex> vertices;
 	vector<GLuint> indices;
 	GLuint VAO;
+	GLuint ntris; // The number of triangles/faces
 
 	// Render data  
 	GLuint VBO, EBO;
 
-	unsigned int ntris; // The number of triangles/faces
-
 	// Adjacency data
 	bool adjacency = false;
-	vector<GLuint> indices_adjacency;
-	map<glm::vec3, unsigned int, CompVectors> pos_index_map; // Maps one unique index for every vertex position vector
+	vector<GLuint> indicesAdjacency;
+	map<glm::vec3, GLuint, CompVectors> posIndexMap; // Maps one unique index for every vertex position vector
 
 	// initializes all the buffer objects/arrays 
 	void setupMesh();
 
 	// Create the data structures used for rendering triangles with adjacency info
-	void generateAdjacencyInfo();
+	void genAdjacencyInfo();
+
+	// Create map of unique vertice indexes, to use for adjacency information generation
+	void genUniqueIndexMap();
 
 	// find index of neighbor vertex to the edge (startIdx -> endIdx) 
 	int findAdjacentVertexIdx(GLuint startIdx, GLuint endIdx, GLuint oppIdx);
