@@ -1,3 +1,9 @@
+/*
+ *	Class for controlling the camera in the scene. 
+ *
+ *	Based on a tutorial by Joey de Vries: https://learnopengl.com/Getting-started/Camera 
+ */
+
 #ifndef CAMERA_H
 #define CAMERA_H
 

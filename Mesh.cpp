@@ -56,19 +56,19 @@ void Mesh::disableAdjacency()
 	adjacency = false;
 }
 
-// initializes all the buffer objects/arrays
+// Initializes all the buffer objects/arrays
 void Mesh::setupMesh()
 {
-	// create buffers/arrays
+	// Create buffers/arrays
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
 
 	glBindVertexArray(VAO);
-	// load data into vertex buffers
+	// Load data into vertex buffers
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	// A great thing about structs is that their memory layout is sequential for all its items.
-	// The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
+	// => can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
 	// again translates to 3/2 floats which translates to a byte array.
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 
@@ -77,8 +77,7 @@ void Mesh::setupMesh()
 
 	if (adjacency) {
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesAdjacency.size() * sizeof(GLuint), &indicesAdjacency[0], GL_STATIC_DRAW);
-	}
-	else {
+	} else {
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
 	}
 
@@ -143,7 +142,7 @@ void Mesh::genUniqueIndexMap()
 		int firstIdx = 3 * i; // The first index of the triangle in the index array
 
 		// For each vertex position, check if in the map.
-		// If not, add it and the current indec. 
+		// If not, add it and the current index. 
 		for (int j = 0; j < 3; j++)
 		{
 			int idx = indices[firstIdx + j];
@@ -167,6 +166,7 @@ int Mesh::findAdjacentVertexIdx(GLuint startIdx, GLuint endIdx, GLuint oppIdx)
 	{
 		int firstIdx = 3 * i;
 
+		// Get the unique indices for the vertices
 		GLuint faceIndices[3];
 		for (int j = 0; j < 3; j++)
 		{

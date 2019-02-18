@@ -1,3 +1,11 @@
+/*
+ *	Class containing methods to use for creating some simle primitives and loading 
+ *	objects from OBJ files. 
+ *	
+ *	The code is a rewritten version of Stefan Gustavsons "TriangleSoup" class 
+ *	used in the course TNM046 at Linköping University. 
+ */
+
 #ifndef MESHCREATOR_H
 #define MESHCREATOR_H
 

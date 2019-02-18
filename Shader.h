@@ -1,3 +1,10 @@
+/*
+ *	Class for loading and creating shaders, as well as setting uniforms
+ * 
+ *	Based on a tutorial by Joey de Vries: https://learnopengl.com/Getting-started/Camera
+ *	Extended to include geometry shaders. 
+ */
+
 #ifndef SHADER_H
 #define SHADER_H
 

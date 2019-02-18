@@ -1,3 +1,10 @@
+/*
+ *	Class for handling mesh information, like vetrices, indices and texture coordinates.
+ *	Also includes a basic generation of adjacency information for each vertex, if that information is required.
+ *
+ *	Author: Emma Broman 
+ */
+
 #ifndef MESH_H
 #define MESH_H
 
