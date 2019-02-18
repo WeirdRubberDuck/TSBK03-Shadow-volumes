@@ -21,6 +21,7 @@ void drawLightSources();
 void drawScene(Shader & objShader);
 void createWindow(const unsigned int height, const unsigned int width, const char* name);
 void processInput(GLFWwindow *window);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
@@ -29,6 +30,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+
+bool showShadowVolume = false;
 
 GLFWwindow* window = nullptr;
 
@@ -57,7 +60,6 @@ glm::vec3 lightPos(1.2f, 2.0f, 3.0f);
 // colors
 glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 glm::vec3 groundColor(0.6f, 0.6f, 0.6f);
-
 glm::vec3 orange(1.0f, 0.5f, 0.2f);
 glm::vec3 green(0.0f, 0.5f, 0.2f);
 
@@ -310,10 +312,11 @@ void drawScene(Shader & objShader)
 	objShader.setVec3("objectColor", green);
 	object2.render();
 
-	// shadow volume: uncomment to draw shadow volume in wireframe
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	//drawShadowVolumes();
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if (showShadowVolume) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		drawShadowVolumes();
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 }
 
 // glfw window creation
@@ -328,6 +331,7 @@ void createWindow(const unsigned int height, const unsigned int width, const cha
 		exit(EXIT_FAILURE);
 	}
 	glfwMakeContextCurrent(window);
+	glfwSetKeyCallback(window, key_callback);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
@@ -359,6 +363,15 @@ void processInput(GLFWwindow *window)
 		lightPos += glm::vec3( deltaStep * (-1.0f), 0.0f, 0.0f);
 	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
 		lightPos += glm::vec3( deltaStep * 1.0f, 0.0f, 0.0f);
+}
+
+// glfw: whenever a key is pressed, this callback is called
+// -------------------------------------------------------
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	// Show shadow volumes
+	if (key == GLFW_KEY_V && action == GLFW_PRESS)
+		showShadowVolume = !showShadowVolume;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
