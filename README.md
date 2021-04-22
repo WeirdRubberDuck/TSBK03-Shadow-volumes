@@ -10,7 +10,7 @@ The scene is rendered in three passes:
 
 The shadow volume creation is done using the geometry shader (see shaders/shadowVolume.geom) and triangles with adjacency information. A better way to do this would be to use a half-edge mesh represenation of the geometry, which enables a more efficient way to identify the adjacent indices. This is, however, beyond the scope of this project, but might be implemented in the future to add the possiblity of including more complex objects (with a lot of triangles) in the scene. 
 
-Below is some result images of the project at 2019-01-23. What is not visible in these is that the shadows are dynamic. The orage object is rotating and the light source can be moved using the arrow keys. I will make a video showing the result in a better way when I have time over. 
+Below is some result images of the project at 2019-01-23. What is not visible in these is that the shadows are dynamic. The orage object is rotating and the light source can be moved using the arrow keys.
 
 **Some result images:**
 
