@@ -157,6 +157,7 @@
     <None Include="shaders\shadowVolume.frag" />
     <None Include="shaders\shadowVolume.geom" />
     <None Include="shaders\shadowVolume.vert" />
+    <None Include="meshes\torus_thingy.obj" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
